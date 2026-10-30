@@ -26,15 +26,19 @@ Założenia architektoniczne poniżej są obowiązkowe. Nie wprowadzaj innej bib
 
 ## Dependency Injection (Awilix)
 
-- Kontener tworzymy w jednym miejscu: w composition root w `packages/app`. Pozostałe pakiety nie tworzą własnych kontenerów, tylko eksportują funkcje rejestrujące swoje zależności.
-- Serwisy dostają zależności przez konstruktor lub parametry fabryki. Nie wywołuj `container.resolve` w logice biznesowej i nie importuj gotowych instancji serwisów.
-- Zależności związane z jednym żądaniem (np. EntityManager MikroORM) rejestruj w scope tworzonym per żądanie (`container.createScope()`).
+- Kontener tworzymy w jednym miejscu: w composition root `packages/app/lib/container.ts`. Pozostałe pakiety nie tworzą własnych kontenerów, tylko eksportują funkcje rejestrujące swoje zależności (wzór: `registerDb()` w `packages/db/src/container.ts`). Nową funkcję rejestrującą wywołaj w `buildContainer()`.
+- Typ zawartości kontenera to interfejs `Cradle` z `@golden-legs/core`. Pakiet, który rejestruje zależność, dopisuje ją do `Cradle` przez `declare module "@golden-legs/core"`. Dzięki temu `resolve()` i parametry fabryk są typowane.
+- Serwisy dostają zależności przez parametry fabryki lub konstruktor (tryb `InjectionMode.PROXY`: `({ em }: Cradle) => ...`). Nie wywołuj `container.resolve` w logice biznesowej i nie importuj gotowych instancji serwisów.
+- W Server Components, Server Actions i Route Handlers bierz zależności ze scope żądania: `(await getRequestScope()).resolve("...")`. Nie używaj w nich głównego kontenera z `getContainer()`.
+- Zależności związane z jednym żądaniem (np. `em`) rejestruj jako `.scoped()`. Kontener działa w trybie `strict`, więc singleton zależny od zależności scoped rzuci błąd: serwis używający `em` też musi być scoped.
 
 ## Baza danych (MikroORM)
 
 - Wszystko, co dotyczy danych, trafia do `packages/db`: konfiguracja (`src/mikro-orm.config.ts`), encje (`src/entities/`), repozytoria, migracje (`src/migrations/`).
 - Encje definiuj przez `defineEntity()`, bez dekoratorów (wymagają dodatkowej konfiguracji kompilatora i metadanych typów). Każdą encję dopisz do tablicy `entities` w `src/entities/index.ts`.
-- Połączenie z bazą bierz z `getOrm()` z `@golden-legs/db`. Nie wywołuj `MikroORM.init()` w innych miejscach, bo każde wywołanie tworzy nową pulę połączeń.
+- W aplikacji bierz `em` z kontenera (scope żądania). `getOrm()` z `@golden-legs/db` służy tylko do rejestracji w kontenerze i skryptów. Nie wywołuj `MikroORM.init()` w innych miejscach, bo każde wywołanie tworzy nową pulę połączeń.
+- Konfiguracja MikroORM to fabryka (`createConfig()`), żeby zmienne środowiskowe były czytane dopiero przy pierwszym połączeniu. `next build` importuje moduły bazy bez danych dostępowych, więc nic w `packages/db` nie może łączyć się z bazą ani czytać `DB_*` przy samym imporcie.
+- Każdy pakiet `@mikro-orm/*` używany w runtime musi być w `serverExternalPackages` w `packages/app/next.config.ts` (`@mikro-orm/core` Next.js wyłącza z bundlowania sam).
 - Schemat zmieniaj wyłącznie migracjami MikroORM: zmień encję, wygeneruj migrację (`npm run db:migration:create`), przejrzyj jej SQL i zacommituj ją razem ze snapshotem. Nie edytuj migracji, które zostały już zastosowane.
 - Każde żądanie pracuje na własnym forku EntityManagera (`em.fork()`). Nigdy nie używaj globalnego EntityManagera.
 - `@golden-legs/db` działa tylko po stronie serwera: nie importuj go w komponentach `"use client"`.

@@ -17,3 +17,6 @@ Format wpisu:
 - 2026-10-30 — MikroORM 7 łączy się z bazą leniwie: `orm.checkConnection()` zaraz po `getOrm()` zwraca `ok: false`, choć pierwsze zapytanie przechodzi. Połączenie testuj zapytaniem.
 - 2026-10-30 — Obraz `postgres` ustawia użytkownika i hasło tylko przy pierwszym starcie wolumenu. Po zmianie `DB_PASSWORD` trzeba `docker compose down -v`, inaczej logowanie się nie powiedzie.
 - 2026-10-30 — Port 5432 na maszynie deweloperskiej bywa zajęty przez lokalny PostgreSQL, dlatego kontener wystawia bazę na `DB_PORT` (domyślnie 5433).
+- 2026-10-30 — `next build` zbiera dane route handlerów, importując ich moduły. Konfiguracja czytająca `DB_*` przy imporcie wywalała build („Missing environment variable DB_HOST”). Rozwiązanie: konfiguracja MikroORM jako fabryka, a w handlerze `await connection()` przed dostępem do bazy.
+- 2026-10-30 — Rozszerzanie (`declare module`) interfejsu, który moduł tylko re-eksportuje, nie działa w TypeScripcie niezawodnie. Dlatego `Cradle` jest zadeklarowany bezpośrednio w `packages/core/src/index.ts`.
+- 2026-10-30 — Promise cache'owany na `globalThis` (`getOrm`, `getContainer`) czyści się po odrzuceniu. Inaczej jedna nieudana próba połączenia psułaby każde kolejne żądanie aż do restartu serwera.

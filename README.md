@@ -49,11 +49,21 @@ Pakiety udostępniają kod źródłowy TypeScript przez `src/index.ts`, a Next.j
 
 ### Dependency Injection
 
-Kontener Awilix tworzony jest raz, w `packages/app`. Pakiety eksportują funkcje rejestrujące swoje serwisy, a serwisy dostają zależności przez konstruktor. Zależności związane z jednym żądaniem, takie jak EntityManager MikroORM, rejestrowane są w scope tworzonym dla każdego żądania.
+Kontener Awilix tworzony jest raz, w `packages/app/lib/container.ts`. Pakiety eksportują funkcje rejestrujące swoje serwisy (np. `registerDb()`), a serwisy dostają zależności przez parametry fabryki. Typ zawartości kontenera to interfejs `Cradle` z `@golden-legs/core`, który każdy pakiet rozszerza o swoje zależności.
+
+Zależności związane z jednym żądaniem, takie jak EntityManager MikroORM (`em`), żyją w scope tworzonym dla każdego żądania:
+
+```ts
+import { getRequestScope } from "@/lib/container";
+
+const em = (await getRequestScope()).resolve("em");
+```
+
+Endpoint `GET /api/health` sprawdza połączenie z bazą przez kontener. Zwraca `200 {"status":"ok"}` albo `503`, gdy baza jest niedostępna.
 
 ### Baza danych
 
-Schemat bazy zmieniany jest wyłącznie migracjami MikroORM. Każde żądanie pracuje na własnym forku EntityManagera, a połączenia obsługuje pula MikroORM. Dane dostępowe pochodzą ze zmiennych środowiskowych.
+Schemat bazy zmieniany jest wyłącznie migracjami MikroORM. Każde żądanie pracuje na własnym forku EntityManagera, a połączenia obsługuje pula MikroORM. Dane dostępowe pochodzą ze zmiennych środowiskowych z pliku `.env` w katalogu głównym, który Next.js wczytuje przez `@next/env` w `packages/app/next.config.ts`.
 
 ## Uruchomienie
 

@@ -10,20 +10,24 @@ function requireEnv(name: string): string {
   return value;
 }
 
-export default defineConfig({
-  host: requireEnv("DB_HOST"),
-  port: Number(requireEnv("DB_PORT")),
-  dbName: requireEnv("DB_NAME"),
-  user: requireEnv("DB_USER"),
-  password: requireEnv("DB_PASSWORD"),
-  entities,
-  // The schema starts empty; entities arrive with the first feature.
-  discovery: { warnWhenNoEntities: false },
-  extensions: [Migrator],
-  // Relative to the working directory, so the CLI runs from packages/db.
-  migrations: {
-    path: "src/migrations",
-    pathTs: "src/migrations",
-  },
-  pool: { min: 0, max: 10 },
-});
+// A factory, so env vars are read on first connection rather than on import:
+// `next build` imports this module without database credentials.
+export default function createConfig() {
+  return defineConfig({
+    host: requireEnv("DB_HOST"),
+    port: Number(requireEnv("DB_PORT")),
+    dbName: requireEnv("DB_NAME"),
+    user: requireEnv("DB_USER"),
+    password: requireEnv("DB_PASSWORD"),
+    entities,
+    // The schema starts empty; entities arrive with the first feature.
+    discovery: { warnWhenNoEntities: false },
+    extensions: [Migrator],
+    // Relative to the working directory, so the CLI runs from packages/db.
+    migrations: {
+      path: "src/migrations",
+      pathTs: "src/migrations",
+    },
+    pool: { min: 0, max: 10 },
+  });
+}
