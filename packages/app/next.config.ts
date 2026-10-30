@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Workspace packages ship TypeScript source, so Next.js compiles them.
+  transpilePackages: ["@golden-legs/core", "@golden-legs/db", "@golden-legs/ui"],
   experimental: {
     agentFeedback: true,
   },

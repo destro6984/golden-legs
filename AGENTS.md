@@ -1,12 +1,63 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# GoldenLegs
 
-## This is NOT the Next.js you know
+Założenia architektoniczne poniżej są obowiązkowe. Nie wprowadzaj innej biblioteki do tych samych zadań (innego ORM, kontenera DI, frameworka CSS czy biblioteki komponentów) bez zgody człowieka.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+## Stos technologiczny
 
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+- **Next.js** (najnowsza wersja, App Router), **React**, **TypeScript** w trybie `strict`.
+- **PostgreSQL** z **MikroORM**: encje, migracje, pula połączeń.
+- **Awilix**: kontener Dependency Injection.
+- **Tailwind CSS**: strony frontendowe (publiczne).
+- **shadcn/ui**: strony backendowe (panel administracyjny).
+- **npm workspaces**: monorepo, jeden `package-lock.json` w katalogu głównym.
 
-<!-- END:nextjs-agent-rules -->
+## Monorepo
+
+| Pakiet | Katalog | Odpowiedzialność | Może importować |
+|---|---|---|---|
+| `@golden-legs/app` | `packages/app` | aplikacja Next.js: routing, strony, server actions, route handlers, composition root DI | `core`, `db`, `ui` |
+| `@golden-legs/core` | `packages/core` | logika domenowa i narzędzia wielokrotnego użytku, niezależne od frameworka | tylko biblioteki zewnętrzne |
+| `@golden-legs/db` | `packages/db` | konfiguracja MikroORM, encje, repozytoria, migracje | `core` |
+| `@golden-legs/ui` | `packages/ui` | komponenty interfejsu wielokrotnego użytku, w tym komponenty shadcn/ui | `core` |
+
+- Importuj inne pakiety po nazwie (`@golden-legs/core`), nigdy ścieżką względną (`../../core`). Zależności między pakietami nie mogą tworzyć cykli, a `app` nie jest importowany przez żaden pakiet.
+- Pakiet udostępnia publiczne API tylko przez `src/index.ts`. Pakiety eksportują kod źródłowy TypeScript, który kompiluje Next.js. Każdy nowy pakiet dopisz do `transpilePackages` w `packages/app/next.config.ts`.
+- Zależność instaluj w pakiecie, który jej używa: `npm install <pakiet> -w @golden-legs/<nazwa>`.
+
+## Dependency Injection (Awilix)
+
+- Kontener tworzymy w jednym miejscu: w composition root w `packages/app`. Pozostałe pakiety nie tworzą własnych kontenerów, tylko eksportują funkcje rejestrujące swoje zależności.
+- Serwisy dostają zależności przez konstruktor lub parametry fabryki. Nie wywołuj `container.resolve` w logice biznesowej i nie importuj gotowych instancji serwisów.
+- Zależności związane z jednym żądaniem (np. EntityManager MikroORM) rejestruj w scope tworzonym per żądanie (`container.createScope()`).
+
+## Baza danych (MikroORM)
+
+- Wszystko, co dotyczy danych, trafia do `packages/db`: konfiguracja, encje, repozytoria, migracje.
+- Schemat zmieniaj wyłącznie migracjami MikroORM. Nie edytuj migracji, które zostały już zastosowane.
+- Każde żądanie pracuje na własnym forku EntityManagera (`em.fork()`). Nigdy nie używaj globalnego EntityManagera.
+- `@golden-legs/db` działa tylko po stronie serwera: nie importuj go w komponentach `"use client"`.
+- Dane dostępowe do bazy pochodzą ze zmiennych środowiskowych, nigdy z kodu.
+
+## Interfejs
+
+- Strony frontendowe (publiczne) stylujemy Tailwind CSS.
+- Strony backendowe (panel administracyjny) budujemy z komponentów shadcn/ui. Komponenty shadcn trafiają do `packages/ui`.
+- Komponent używany w więcej niż jednym miejscu przenieś do `packages/ui`. Komponent jednej strony może zostać w `packages/app`.
+- Komponenty z `packages/ui` nie pobierają danych same: nie importują `db` ani serwisów, wszystko dostają przez propsy.
+
+## Komendy
+
+Uruchamiaj je z katalogu głównego repozytorium:
+
+```bash
+npm install         # instaluje zależności wszystkich pakietów
+npm run dev         # serwer deweloperski, http://localhost:3000
+npm run lint        # ESLint
+npm run typecheck   # TypeScript we wszystkich pakietach
+npm run build       # build produkcyjny
+```
+
+Zasady specyficzne dla Next.js są w `packages/app/AGENTS.md`.
 
 # Zasady pracy z AI w tym repozytorium
 
@@ -82,7 +133,7 @@ Do zrobienia: <co zostało>
 
 ## Weryfikacja
 
-- Nie uznawaj zmiany za skończoną bez dowodu. Przed każdym commitem uruchom `npm run lint`, `npx tsc --noEmit` i `npm run build` (oraz testy, gdy powstaną). Wszystkie muszą przejść.
+- Nie uznawaj zmiany za skończoną bez dowodu. Przed każdym commitem uruchom `npm run lint`, `npm run typecheck` i `npm run build` (oraz testy, gdy powstaną). Wszystkie muszą przejść.
 - Zmiany w UI sprawdź w działającej aplikacji (`npm run dev`), a nie tylko czytając kod.
 - Błędy naprawiaj samodzielnie: odtwórz problem, znajdź przyczynę, popraw i uruchom weryfikację ponownie.
 - Jeśli czegoś nie udało się zweryfikować, napisz to wprost i zapisz w dzienniku zadania jako pułapkę lub rzecz do zrobienia.

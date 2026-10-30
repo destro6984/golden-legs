@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GoldenLegs
 
-## Getting Started
+Aplikacja webowa zbudowana na Next.js, React i TypeScript, z bazą PostgreSQL.
 
-First, run the development server:
+## Stos technologiczny
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| Obszar | Technologia |
+|---|---|
+| Framework | Next.js (App Router), React, TypeScript |
+| Baza danych | PostgreSQL |
+| ORM | MikroORM: encje, migracje, pula połączeń |
+| Dependency Injection | Awilix |
+| Strony frontendowe | Tailwind CSS |
+| Strony backendowe (panel administracyjny) | shadcn/ui |
+| Monorepo | npm workspaces |
+
+## Architektura
+
+Projekt jest monorepo. Kod podzielony jest na pakiety w katalogu `packages/`:
+
+```
+golden-legs/
+├── packages/
+│   ├── app/    @golden-legs/app   aplikacja Next.js
+│   ├── core/   @golden-legs/core  logika domenowa i narzędzia wielokrotnego użytku
+│   ├── db/     @golden-legs/db    MikroORM: encje, repozytoria, migracje
+│   └── ui/     @golden-legs/ui    komponenty interfejsu wielokrotnego użytku
+├── .ai/                           specyfikacje, dzienniki zadań i lekcje dla pracy z AI
+├── tsconfig.base.json             wspólna konfiguracja TypeScriptu
+└── package.json                   definicja workspace'ów i skrypty
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Zależności między pakietami
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+        app
+      ↙  ↓  ↘
+    ui   db   │
+      ↘  ↓  ↙
+        core
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **app** to aplikacja Next.js: routing, strony, server actions i route handlers. Tu powstaje kontener Awilix (composition root), który łączy serwisy z pozostałych pakietów.
+- **core** zawiera logikę domenową i narzędzia niezależne od frameworka. Nie zależy od żadnego innego pakietu.
+- **db** zawiera konfigurację MikroORM, encje, repozytoria i migracje. Działa wyłącznie po stronie serwera.
+- **ui** zawiera komponenty wielokrotnego użytku, w tym komponenty shadcn/ui dla panelu administracyjnego. Komponenty dostają dane przez propsy i nie odwołują się do bazy.
 
-## Learn More
+Pakiety udostępniają kod źródłowy TypeScript przez `src/index.ts`, a Next.js kompiluje go dzięki opcji `transpilePackages`.
 
-To learn more about Next.js, take a look at the following resources:
+### Dependency Injection
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Kontener Awilix tworzony jest raz, w `packages/app`. Pakiety eksportują funkcje rejestrujące swoje serwisy, a serwisy dostają zależności przez konstruktor. Zależności związane z jednym żądaniem, takie jak EntityManager MikroORM, rejestrowane są w scope tworzonym dla każdego żądania.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Baza danych
 
-## Deploy on Vercel
+Schemat bazy zmieniany jest wyłącznie migracjami MikroORM. Każde żądanie pracuje na własnym forku EntityManagera, a połączenia obsługuje pula MikroORM. Dane dostępowe pochodzą ze zmiennych środowiskowych.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Uruchomienie
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Wymagany jest Node.js 20 lub nowszy.
+
+```bash
+npm install
+npm run dev         # http://localhost:3000
+```
+
+Pozostałe komendy:
+
+```bash
+npm run lint        # ESLint
+npm run typecheck   # TypeScript we wszystkich pakietach
+npm run build       # build produkcyjny
+npm run start       # uruchomienie zbudowanej aplikacji
+```
+
+Zależność dodawaj do pakietu, który jej używa:
+
+```bash
+npm install <pakiet> -w @golden-legs/db
+```
+
+## Praca z AI
+
+Zasady dla agentów AI i ludzi pracujących z AI są w [AGENTS.md](AGENTS.md).
