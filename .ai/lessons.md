@@ -29,3 +29,4 @@ Format wpisu:
 - 2026-10-30 — `process.loadEnvFile()` nie nadpisuje zmiennych, które proces już ma. Dlatego testy integracyjne bezpiecznie przekazują `DB_*` kontenera do `next start`, a plik z katalogu głównego nie przekieruje ich na bazę deweloperską.
 - 2026-10-30 — Tryb `strict` w Awilix nie blokuje pobierania zależności scoped z głównego kontenera. Blokuje singleton, który od niej zależy. Do pracy z `em` zawsze używaj `withScope`.
 - 2026-10-30 — Vitest 5 wymaga `@types/node` ≥ 22 (konflikt peer z `^20`), a configi Vitest muszą mieć rozszerzenie `.mts`, bo root `package.json` nie ma `"type": "module"`.
+- 2026-10-30 — `git` łączy się z GitHubem przez alias SSH `github.com-personal` (konto `destro6984`), a `gh` może być zalogowany na inne konto, które ma tylko odczyt. Operacje `gh` z zapisem (etykiety, PR, komentarze) kończą się wtedy błędem HTTP 404. Przed pracą skilli `om-*` sprawdź `gh api repos/destro6984/golden-legs -q .permissions`.
