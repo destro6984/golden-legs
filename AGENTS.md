@@ -102,6 +102,7 @@ Pełny standard inżynierski (tabela nazewnictwa, zasady, minimum bezpieczeństw
 Uruchamiaj je z katalogu głównego repozytorium:
 
 ```bash
+npm run setup       # pierwsze uruchomienie: npm install, .env z losowym hasłem, baza, migracje (idempotentny)
 npm install         # instaluje zależności wszystkich pakietów
 npm run dev         # serwer deweloperski, http://localhost:3000
 npm run lint        # ESLint

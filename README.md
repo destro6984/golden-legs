@@ -87,6 +87,17 @@ Schemat bazy zmieniany jest wyłącznie migracjami MikroORM. Każde żądanie pr
 
 Wymagany jest Node.js 22.17 lub nowszy oraz Docker z Docker Compose.
 
+Najprościej jedną komendą:
+
+```bash
+npm run setup           # Node, Docker, npm install, .env, PostgreSQL, migracje
+npm run dev             # http://localhost:3000
+```
+
+`npm run setup` tworzy `.env` z `.env.example` z losowym `DB_PASSWORD` (hasło nie jest wypisywane), uruchamia bazę i stosuje migracje. Można go uruchamiać wielokrotnie: istniejącego `.env` nigdy nie zmienia, a pozostałe kroki są bezpieczne do powtórzenia. Jeśli wolumen bazy już istnieje, a `.env` nie, instalator zatrzymuje się, zamiast generować hasło niepasujące do bazy. Gdy port 5433 jest zajęty, zmień `DB_PORT` w `.env` i uruchom go ponownie.
+
+Albo ręcznie, krok po kroku:
+
 ```bash
 npm install
 cp .env.example .env    # uzupełnij DB_PASSWORD

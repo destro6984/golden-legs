@@ -45,12 +45,12 @@ Non-goals: uruchamianie `npm run dev`, instalacja Node/Dockera, Windows bez WSL,
 
 ### Phase 1: instalator npm run setup
 
-- [x] 1.1 Konfiguracja bramek dla scripts/
-- [x] 1.2 Kroki sprawdzające
-- [x] 1.3 Kroki zmieniające stan
-- [x] 1.4 Przepływ, punkt wejścia i skrypt setup
-- [ ] 1.5 Dokumentacja README i AGENTS
-- [ ] 1.6 Weryfikacja ręczna
+- [x] 1.1 Konfiguracja bramek dla scripts/ — 872e02f
+- [x] 1.2 Kroki sprawdzające — 872e02f
+- [x] 1.3 Kroki zmieniające stan — 872e02f
+- [x] 1.4 Przepływ, punkt wejścia i skrypt setup — 872e02f
+- [x] 1.5 Dokumentacja README i AGENTS
+- [x] 1.6 Weryfikacja ręczna
 
 ## Wpisy
 
@@ -63,3 +63,8 @@ Do zrobienia: kroki 1.1–1.6.
 Commit: instalator `scripts/setup.mjs` (`steps.mjs`, `run-setup.mjs`, `system.mjs`) z testami (30 testów, 100% pokrycia), skrypt `setup`, `scripts/` w lincie i w pokryciu Vitest.
 Decyzje/pułapki: projekt compose odczytywany przez `docker compose config --no-interpolate`, bo bez `.env` zwykły `config` pada na `${DB_*:?}`. Punkt wejścia ustawia `process.exitCode`, żeby dało się go przetestować importem. `.env` zapisywany z `flag: "wx"` i `mode: 0o600`.
 Do zrobienia: dokumentacja (1.5) i weryfikacja ręczna (1.6).
+
+### 2026-10-30
+Commit: `README.md` („Uruchomienie”: `npm run setup` jako zalecana droga, ręczne kroki jako alternatywa), `AGENTS.md` (komenda), dwie lekcje.
+Decyzje/pułapki: weryfikacja ręczna na świeżym klonie (osobny projekt compose `gl-setup-check`, port 5499). Bieg 1 kończy się czytelnym błędem portu (5433 zajęty przez bazę deweloperską). Biegi 2–3 kończą się kodem 0 i pomijają `.env` bez zmian (ta sama suma SHA-256). `GET /api/health` zwraca 200. Bez `.env` przy istniejącym wolumenie instalator zatrzymuje się bez zapisu. `.env` ma tryb 600, a hasło nie trafia do logu. Kontener i wolumen klonu usunięte.
+Do zrobienia: pełna bramka, przegląd `om-auto-review-pr`, gotowy PR.
