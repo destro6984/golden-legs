@@ -57,12 +57,28 @@ Schemat bazy zmieniany jest wyłącznie migracjami MikroORM. Każde żądanie pr
 
 ## Uruchomienie
 
-Wymagany jest Node.js 20 lub nowszy.
+Wymagany jest Node.js 22.17 lub nowszy oraz Docker z Docker Compose.
 
 ```bash
 npm install
-npm run dev         # http://localhost:3000
+cp .env.example .env    # uzupełnij DB_PASSWORD
+npm run db:up           # PostgreSQL w kontenerze, port 5433 na hoście
+npm run db:migrate      # stosuje migracje
+npm run dev             # http://localhost:3000
 ```
+
+Zmienne `DB_*` z pliku `.env` w katalogu głównym czyta zarówno `docker compose`, jak i CLI MikroORM. Kontener PostgreSQL inicjuje bazę tylko przy pierwszym uruchomieniu, więc zmiana `DB_USER` lub `DB_PASSWORD` później wymaga usunięcia wolumenu: `docker compose down -v` (kasuje dane).
+
+### Baza danych i migracje
+
+```bash
+npm run db:up                 # uruchamia kontener i czeka, aż baza będzie gotowa
+npm run db:down               # zatrzymuje kontener, dane zostają w wolumenie
+npm run db:migration:create   # generuje migrację z różnicy między encjami a schematem
+npm run db:migrate            # stosuje migracje
+```
+
+Encje i migracje są w `packages/db/src/`. Pozostałe komendy CLI MikroORM wywołasz przez `npm run orm -w @golden-legs/db -- <komenda>`.
 
 Pozostałe komendy:
 

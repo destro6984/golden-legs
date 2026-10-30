@@ -32,11 +32,13 @@ Założenia architektoniczne poniżej są obowiązkowe. Nie wprowadzaj innej bib
 
 ## Baza danych (MikroORM)
 
-- Wszystko, co dotyczy danych, trafia do `packages/db`: konfiguracja, encje, repozytoria, migracje.
-- Schemat zmieniaj wyłącznie migracjami MikroORM. Nie edytuj migracji, które zostały już zastosowane.
+- Wszystko, co dotyczy danych, trafia do `packages/db`: konfiguracja (`src/mikro-orm.config.ts`), encje (`src/entities/`), repozytoria, migracje (`src/migrations/`).
+- Encje definiuj przez `defineEntity()`, bez dekoratorów (wymagają dodatkowej konfiguracji kompilatora i metadanych typów). Każdą encję dopisz do tablicy `entities` w `src/entities/index.ts`.
+- Połączenie z bazą bierz z `getOrm()` z `@golden-legs/db`. Nie wywołuj `MikroORM.init()` w innych miejscach, bo każde wywołanie tworzy nową pulę połączeń.
+- Schemat zmieniaj wyłącznie migracjami MikroORM: zmień encję, wygeneruj migrację (`npm run db:migration:create`), przejrzyj jej SQL i zacommituj ją razem ze snapshotem. Nie edytuj migracji, które zostały już zastosowane.
 - Każde żądanie pracuje na własnym forku EntityManagera (`em.fork()`). Nigdy nie używaj globalnego EntityManagera.
 - `@golden-legs/db` działa tylko po stronie serwera: nie importuj go w komponentach `"use client"`.
-- Dane dostępowe do bazy pochodzą ze zmiennych środowiskowych, nigdy z kodu.
+- Dane dostępowe do bazy pochodzą ze zmiennych środowiskowych `DB_*` (wzór w `.env.example`), nigdy z kodu. Nową zmienną dopisz do `.env.example`.
 
 ## Interfejs
 
@@ -55,7 +57,13 @@ npm run dev         # serwer deweloperski, http://localhost:3000
 npm run lint        # ESLint
 npm run typecheck   # TypeScript we wszystkich pakietach
 npm run build       # build produkcyjny
+npm run db:up       # PostgreSQL w Dockerze (compose.yaml), czeka aż baza będzie gotowa
+npm run db:down     # zatrzymuje kontener, dane zostają w wolumenie
+npm run db:migration:create   # generuje migrację z różnicy między encjami a schematem
+npm run db:migrate  # stosuje migracje
 ```
+
+Wymagany jest Node.js 22.17 lub nowszy (wymóg MikroORM 7).
 
 Zasady specyficzne dla Next.js są w `packages/app/AGENTS.md`.
 

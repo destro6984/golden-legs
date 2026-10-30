@@ -7,6 +7,20 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "orm": "node --env-file-if-exists=../../.env ../../node_modules/@mikro-orm/cli/cli.js",
+    "migration:create": "npm run orm -- migration:create",
+    "migration:up": "npm run orm -- migration:up",
+    "migration:down": "npm run orm -- migration:down",
+    "migration:list": "npm run orm -- migration:list"
+  },
+  "dependencies": {
+    "@mikro-orm/core": "^7.2.5",
+    "@mikro-orm/migrations": "^7.2.5",
+    "@mikro-orm/postgresql": "^7.2.5"
+  },
+  "devDependencies": {
+    "@mikro-orm/cli": "^7.2.5",
+    "tsx": "^4.23.15"
   }
 }

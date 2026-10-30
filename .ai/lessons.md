@@ -12,3 +12,8 @@ Format wpisu:
 ## Wpisy
 
 <!-- Nowe wpisy dopisuj na końcu listy. -->
+
+- 2026-10-30 — MikroORM 7 nie wczytuje sam pliku `.env`. Skrypty CLI w `packages/db` robią to przez `node --env-file-if-exists=../../.env`. Kod aplikacji musi dostać zmienne z procesu.
+- 2026-10-30 — MikroORM 7 łączy się z bazą leniwie: `orm.checkConnection()` zaraz po `getOrm()` zwraca `ok: false`, choć pierwsze zapytanie przechodzi. Połączenie testuj zapytaniem.
+- 2026-10-30 — Obraz `postgres` ustawia użytkownika i hasło tylko przy pierwszym starcie wolumenu. Po zmianie `DB_PASSWORD` trzeba `docker compose down -v`, inaczej logowanie się nie powiedzie.
+- 2026-10-30 — Port 5432 na maszynie deweloperskiej bywa zajęty przez lokalny PostgreSQL, dlatego kontener wystawia bazę na `DB_PORT` (domyślnie 5433).
