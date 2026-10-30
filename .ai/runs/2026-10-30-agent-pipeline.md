@@ -20,3 +20,8 @@ Do zrobienia: założyć etykiety z konta z prawem zapisu; zdecydować, czy dopi
 Commit: `npm audit --audit-level=moderate` jako pierwsza komenda bramki walidacji w `.ai/agentic.config.json`, `SDLC.md` i `CODE_REVIEW.md`.
 Decyzje/pułapki: próg `moderate`, bo zwykły `npm audit` pada na 3 znanych zgłoszeniach o niskim priorytecie w CLI `shadcn`. CI (`.github/workflows/ci.yml`) jeszcze nie uruchamia audytu.
 Do zrobienia: założyć etykiety z konta z prawem zapisu; ewentualnie dodać audyt do CI.
+
+### 2026-10-30
+Commit: krok `npm audit --audit-level=moderate` w jobie „Lint & typecheck” w `.github/workflows/ci.yml`, przed lintem.
+Decyzje/pułapki: nazwa joba bez zmian, żeby nie zmienić nazwy wymaganego checka w ochronie gałęzi.
+Do zrobienia: założyć etykiety z konta z prawem zapisu.

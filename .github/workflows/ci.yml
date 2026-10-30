@@ -26,6 +26,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      # Moderate and above fail; the known low-severity shadcn CLI findings do not.
+      - run: npm audit --audit-level=moderate
       - run: npm run lint
       - run: npm run typecheck
 
