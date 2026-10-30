@@ -26,3 +26,6 @@ Format wpisu:
 - 2026-10-30 — Tailwind v4 skanuje tylko pakiet aplikacji. Bez `@source ".."` w `packages/ui/src/styles/globals.css` klasy użyte wyłącznie w komponentach `ui` nie trafiłyby do CSS.
 - 2026-10-30 — `npm audit` zgłasza 3 problemy o niskim priorytecie z `deepmerge` w CLI `shadcn` (devDependency `ui`, potrzebna tylko dla `shadcn/tailwind.css` przy budowaniu). Proponowana poprawka (`shadcn@1.0.0`) to downgrade, więc jej nie stosujemy.
 - 2026-10-30 — Hook `protect-env` blokuje każdą komendę powłoki, której tekst zawiera nazwę pliku z sekretami, nawet w `echo` czy opisie. W komendach testowych nie wpisuj tej nazwy. Zmienne podane w powłoce mają pierwszeństwo przed plikiem (`--env-file-if-exists`), więc błędne wartości testuj przez `DB_PORT=... npm run ...`.
+- 2026-10-30 — `process.loadEnvFile()` nie nadpisuje zmiennych, które proces już ma. Dlatego testy integracyjne bezpiecznie przekazują `DB_*` kontenera do `next start`, a plik z katalogu głównego nie przekieruje ich na bazę deweloperską.
+- 2026-10-30 — Tryb `strict` w Awilix nie blokuje pobierania zależności scoped z głównego kontenera. Blokuje singleton, który od niej zależy. Do pracy z `em` zawsze używaj `withScope`.
+- 2026-10-30 — Vitest 5 wymaga `@types/node` ≥ 22 (konflikt peer z `^20`), a configi Vitest muszą mieć rozszerzenie `.mts`, bo root `package.json` nie ma `"type": "module"`.

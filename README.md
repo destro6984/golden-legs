@@ -123,6 +123,25 @@ Zależność dodawaj do pakietu, który jej używa:
 npm install <pakiet> -w @golden-legs/db
 ```
 
+## Testy i CI
+
+| Rodzaj | Narzędzia | Gdzie | Komenda |
+|---|---|---|---|
+| Jednostkowe | Vitest, pokrycie v8 z progiem **100%** | `*.test.ts(x)` obok kodu | `npm run test:coverage` |
+| Integracyjne | Vitest, PostgreSQL w testcontainers, `next start`, agent-browser | `packages/app/tests/integration/*.int.test.ts` | `npm run test:integration` |
+
+Testy integracyjne wymagają Dockera. Przed testami `globalSetup` uruchamia tymczasowy PostgreSQL (ten sam obraz co w `compose.yaml`), stosuje migracje i startuje zbudowaną aplikację na wolnym porcie. Po testach kontener jest usuwany.
+
+Tę samą tymczasową instancję możesz uruchomić ręcznie, np. dla agenta AI:
+
+```bash
+npm run app:ephemeral                  # wypisuje adres, Ctrl+C sprząta
+npx agent-browser open <adres>
+npx agent-browser snapshot
+```
+
+CI (`.github/workflows/ci.yml`) na każdym pull requeście i pushu do `main` uruchamia równolegle: lint z typecheckiem, testy jednostkowe z progiem pokrycia, build i testy integracyjne.
+
 ## Praca z AI
 
 Zasady dla agentów AI i ludzi pracujących z AI są w [AGENTS.md](AGENTS.md).

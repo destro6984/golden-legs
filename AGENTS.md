@@ -88,6 +88,15 @@ Pełny standard inżynierski (tabela nazewnictwa, zasady, minimum bezpieczeństw
 - Panel korzysta ze wspólnych bloków z `ui/src/backend/`: `apiCall` (jedyne miejsce z `fetch('/api/...')`), `CrudForm`, `DataTable` i komponentów `feedback/`. Powstaną razem z pierwszym ekranem panelu. Do tego czasu nie twórz ich zamienników.
 - Komponenty z `packages/ui` nie pobierają danych same, wszystko dostają przez propsy.
 
+## Testy
+
+- **Każda nowa funkcja musi mieć 100% pokrycia testami jednostkowymi: linie, instrukcje, gałęzie i funkcje. Bez wyjątków. Zmiana, która obniża pokrycie poniżej 100%, nie może zostać zmergowana.** Pilnuje tego próg `thresholds: { 100: true }` w `vitest.config.mts` i job „Unit tests” w CI. Nie obniżaj progu i nie dopisuj plików do `coverage.exclude`, żeby ominąć tę zasadę. Wyjątek (np. wygenerowany kod) wymaga zgody człowieka.
+- Testy jednostkowe: Vitest, plik `<nazwa>.test.ts(x)` obok testowanego pliku. Zależności zewnętrzne (baza, sieć, inne serwisy) zastępuj mockami (`vi.mock`, `vi.fn`).
+- Testy integracyjne: `packages/app/tests/integration/*.int.test.ts`. `globalSetup` uruchamia PostgreSQL przez testcontainers, stosuje migracje i startuje zbudowaną aplikację (`next start`). Adres dostajesz przez `inject("baseUrl")`. Testy w przeglądarce idą przez `agent-browser` z osobną sesją (`--session`). Wymagany Docker.
+- Nowy endpoint lub ekran dostaje też test integracyjny, który przechodzi przez prawdziwą bazę.
+- Do ręcznego sprawdzenia aplikacji przez agenta uruchom `npm run app:ephemeral`: dostajesz tymczasową instancję z pustą bazą i adres do użycia z `npx agent-browser open <url>`. Ctrl+C usuwa kontener.
+- CI (`.github/workflows/ci.yml`) na każdym pull requeście uruchamia: lint z typecheckiem, testy jednostkowe z pokryciem, build i testy integracyjne.
+
 ## Komendy
 
 Uruchamiaj je z katalogu głównego repozytorium:
@@ -98,6 +107,10 @@ npm run dev         # serwer deweloperski, http://localhost:3000
 npm run lint        # ESLint
 npm run typecheck   # TypeScript we wszystkich pakietach
 npm run build       # build produkcyjny
+npm test            # testy jednostkowe
+npm run test:coverage     # testy jednostkowe z progiem 100% pokrycia
+npm run test:integration  # build + PostgreSQL (testcontainers) + aplikacja + przeglądarka
+npm run app:ephemeral     # tymczasowa instancja aplikacji z bazą do testów przez agent-browser
 npm run db:up       # PostgreSQL w Dockerze (compose.yaml), czeka aż baza będzie gotowa
 npm run db:down     # zatrzymuje kontener, dane zostają w wolumenie
 npm run db:migration:create   # generuje migrację z różnicy między encjami a schematem
@@ -182,7 +195,7 @@ Do zrobienia: <co zostało>
 
 ## Weryfikacja
 
-- Nie uznawaj zmiany za skończoną bez dowodu. Przed każdym commitem uruchom `npm run lint`, `npm run typecheck` i `npm run build` (oraz testy, gdy powstaną). Wszystkie muszą przejść.
+- Nie uznawaj zmiany za skończoną bez dowodu. Przed każdym commitem uruchom `npm run lint`, `npm run typecheck`, `npm run test:coverage` i `npm run build`. Gdy zmiana dotyka endpointu, bazy lub ekranu, uruchom też `npm run test:integration`. Wszystkie muszą przejść.
 - Zmiany w UI sprawdź w działającej aplikacji (`npm run dev`), a nie tylko czytając kod.
 - Błędy naprawiaj samodzielnie: odtwórz problem, znajdź przyczynę, popraw i uruchom weryfikację ponownie.
 - Jeśli czegoś nie udało się zweryfikować, napisz to wprost i zapisz w dzienniku zadania jako pułapkę lub rzecz do zrobienia.
