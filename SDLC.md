@@ -119,12 +119,13 @@ The `om-auto-*` skills run this process unattended and are chainable: each accep
 
 Every PR passes the full validation gate before review sign-off, in this order:
 
+- `npm audit --audit-level=moderate`
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test:coverage`
 - `npm run test:integration`
 
-`npm run test:integration` builds the app first (`npm run build`) and needs Docker for the PostgreSQL testcontainer.
+`npm run test:integration` builds the app first (`npm run build`) and needs Docker for the PostgreSQL testcontainer. `npm audit --audit-level=moderate` fails only on moderate or higher advisories; the known low-severity `deepmerge` findings in the `shadcn` CLI (see `.ai/lessons.md`) do not block.
 
 Any non-zero exit fails the gate and blocks the PR. The implementing skills run the gate before opening a PR, and `om-check-and-commit` runs it before pushing a hand-worked branch. The command list lives in `.ai/agentic.config.json`; when it changes, update it there and in this section together.
 

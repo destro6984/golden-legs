@@ -76,4 +76,4 @@ Werdykt `changes-requested` wymaga co najmniej jednego blockera lub majora.
 
 ## Bramka walidacji
 
-Zgodnie z `.ai/agentic.config.json`: `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run test:integration` (ta komenda buduje aplikację i wymaga Dockera).
+Zgodnie z `.ai/agentic.config.json`: `npm audit --audit-level=moderate`, `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run test:integration` (ta komenda buduje aplikację i wymaga Dockera).
