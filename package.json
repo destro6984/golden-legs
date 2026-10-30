@@ -6,10 +6,11 @@
     "packages/*"
   ],
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "npm run dev -w @golden-legs/app",
     "build": "npm run build -w @golden-legs/app",
     "start": "npm run start -w @golden-legs/app",
-    "lint": "eslint packages && npm run lint -w @golden-legs/app",
+    "lint": "eslint packages scripts && npm run lint -w @golden-legs/app",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

@@ -45,10 +45,10 @@ Non-goals: uruchamianie `npm run dev`, instalacja Node/Dockera, Windows bez WSL,
 
 ### Phase 1: instalator npm run setup
 
-- [ ] 1.1 Konfiguracja bramek dla scripts/
-- [ ] 1.2 Kroki sprawdzające
-- [ ] 1.3 Kroki zmieniające stan
-- [ ] 1.4 Przepływ, punkt wejścia i skrypt setup
+- [x] 1.1 Konfiguracja bramek dla scripts/
+- [x] 1.2 Kroki sprawdzające
+- [x] 1.3 Kroki zmieniające stan
+- [x] 1.4 Przepływ, punkt wejścia i skrypt setup
 - [ ] 1.5 Dokumentacja README i AGENTS
 - [ ] 1.6 Weryfikacja ręczna
 
@@ -58,3 +58,8 @@ Non-goals: uruchamianie `npm run dev`, instalacja Node/Dockera, Windows bez WSL,
 Commit: plan wykonania (pierwszy commit gałęzi `feat/setup-installer`).
 Decyzje/pułapki: osobny plik dziennika, bo `.ai/runs/2026-10-30-setup-installer.md` jest już w spec PR #2 i ta sama ścieżka w obu PR-ach dałaby konflikt. Specyfikacja jest skopiowana do worktree z gałęzi `spec/setup-installer`, ale nie jest commitowana na tej gałęzi.
 Do zrobienia: kroki 1.1–1.6.
+
+### 2026-10-30
+Commit: instalator `scripts/setup.mjs` (`steps.mjs`, `run-setup.mjs`, `system.mjs`) z testami (30 testów, 100% pokrycia), skrypt `setup`, `scripts/` w lincie i w pokryciu Vitest.
+Decyzje/pułapki: projekt compose odczytywany przez `docker compose config --no-interpolate`, bo bez `.env` zwykły `config` pada na `${DB_*:?}`. Punkt wejścia ustawia `process.exitCode`, żeby dało się go przetestować importem. `.env` zapisywany z `flag: "wx"` i `mode: 0o600`.
+Do zrobienia: dokumentacja (1.5) i weryfikacja ręczna (1.6).
