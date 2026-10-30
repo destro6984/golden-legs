@@ -3,8 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { APP_NAME } from "@golden-legs/core";
 import "./globals.css";
 
+// --font-sans is the variable the shadcn/ui theme reads.
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 

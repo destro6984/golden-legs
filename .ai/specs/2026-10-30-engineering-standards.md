@@ -255,9 +255,11 @@ Done on 2026-10-30:
 2. `core/src/http/` with `errors.ts` and `apiHandler.ts`; shared `logger.ts`.
 3. `/api/health` rewritten as the reference example (`HealthService` + `apiHandler`
    + `withScope`).
+4. shadcn/ui set up in `packages/ui` (style `base-nova`, Base UI, `neutral`, lucide);
+   no primitives added yet.
 
 Next, each when its first real use appears:
 
-4. Zod env schema (`core/src/config/env.ts`) replacing ad-hoc `requireEnv`.
-5. shadcn/ui setup and `ui/src/backend/` (apiCall, CrudForm, DataTable, feedback).
-6. `makeCrudRoute`, `auth.ts`, `validators/`, `events/` with their first concept.
+5. Zod env schema (`core/src/config/env.ts`) replacing ad-hoc `requireEnv`.
+6. `ui/src/backend/` (apiCall, CrudForm, DataTable, feedback) with the first panel screen.
+7. `makeCrudRoute`, `auth.ts`, `validators/`, `events/` with their first concept.

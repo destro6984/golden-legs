@@ -45,7 +45,19 @@ golden-legs/
 - **db** zawiera konfigurację MikroORM, encje i migracje. Jako jedyny pakiet importuje `@mikro-orm/*` i nie zależy od żadnego innego pakietu.
 - **ui** zawiera komponenty wielokrotnego użytku, w tym komponenty shadcn/ui dla panelu administracyjnego. Dane dostaje przez propsy i nie importuje innych pakietów.
 
-Kierunek zależności pilnuje ESLint (`no-restricted-imports`). Pakiety udostępniają kod źródłowy TypeScript przez `src/index.ts`, a Next.js kompiluje go dzięki opcji `transpilePackages`.
+Kierunek zależności pilnuje ESLint (`no-restricted-imports`). Pakiety udostępniają kod źródłowy TypeScript (`core` i `db` przez `src/index.ts`, `ui` przez ścieżki w stylu shadcn), a Next.js kompiluje go dzięki opcji `transpilePackages`.
+
+### Interfejs (shadcn/ui)
+
+shadcn/ui jest skonfigurowany w `packages/ui` (styl `base-nova` na Base UI, kolor `neutral`, ikony lucide). Motyw jest w `packages/ui/src/styles/globals.css` i importuje go `packages/app/app/globals.css`. Komponent dodajesz z katalogu głównego:
+
+```bash
+npx shadcn@latest add <komponent> -c packages/app   # trafia do packages/ui/src/components/ui/
+```
+
+```tsx
+import { Button } from "@golden-legs/ui/components/ui/button";
+```
 
 Kod domenowy jest podzielony na koncepty: ten sam podkatalog (np. `orders/`) powtarza się w `db/src/entities/`, `core/src/services/` i `app/app/api/`. Pełny standard: [.ai/specs/2026-10-30-engineering-standards.md](.ai/specs/2026-10-30-engineering-standards.md).
 

@@ -26,7 +26,7 @@ Pełny standard inżynierski (tabela nazewnictwa, zasady, minimum bezpieczeństw
 - `core` nie importuje `next` ani `react`. Typy ORM (`EntityManager`, `MikroORM`) bierze z `@golden-legs/db`, nie z `@mikro-orm/*`.
 - `app` nie importuje `@golden-legs/db`: do bazy sięga wyłącznie przez serwisy z `core`.
 - Importuj inne pakiety po nazwie (`@golden-legs/core`), nigdy ścieżką względną (`../../core`).
-- Pakiet udostępnia publiczne API tylko przez `src/index.ts`. Pakiety eksportują kod źródłowy TypeScript, który kompiluje Next.js. Każdy nowy pakiet dopisz do `transpilePackages` w `packages/app/next.config.ts`.
+- `core` i `db` udostępniają publiczne API tylko przez `src/index.ts`. `ui` eksportuje ścieżki zgodnie z konwencją shadcn: `@golden-legs/ui/components/...`, `@golden-legs/ui/lib/...`, `@golden-legs/ui/globals.css`. Wewnątrz `ui` importy idą przez aliasy `#components/*`, `#lib/*` i `#hooks/*` (`imports` w `package.json`). Pakiety eksportują kod źródłowy TypeScript, który kompiluje Next.js. Każdy nowy pakiet dopisz do `transpilePackages` w `packages/app/next.config.ts`.
 - Zależność instaluj w pakiecie, który jej używa: `npm install <pakiet> -w @golden-legs/<nazwa>`.
 
 ## Dependency Injection (Awilix)
@@ -69,13 +69,16 @@ Pełny standard inżynierski (tabela nazewnictwa, zasady, minimum bezpieczeństw
 ## Interfejs
 
 - Strony frontendowe (publiczne) stylujemy Tailwind CSS.
-- Strony backendowe (panel administracyjny) budujemy z komponentów shadcn/ui.
+- Strony backendowe (panel administracyjny) budujemy z komponentów shadcn/ui: styl `base-nova` (prymitywy Base UI, `@base-ui/react`), kolor bazowy `neutral`, ikony `lucide`.
+- Motyw (zmienne CSS, tryb ciemny, `@source` dla pakietu `ui`) jest w `packages/ui/src/styles/globals.css`. `packages/app/app/globals.css` tylko go importuje. Kolory i promienie zmieniaj w motywie, nie w komponentach.
+- Font aplikacji ustawia `next/font` w `layout.tsx` przez zmienną `--font-sans`, którą czyta motyw.
+- `packages/app/components.json` i `packages/ui/components.json` muszą mieć ten sam `style`, `baseColor` i `iconLibrary`.
 - Gdzie trafia nowy komponent:
-  1. prymityw shadcn → `ui/src/components/ui/`, wyłącznie przez `npx shadcn@latest add <nazwa>`, nigdy pisany ręcznie;
+  1. prymityw shadcn → `ui/src/components/ui/`, wyłącznie przez `npx shadcn@latest add <nazwa> -c packages/app` uruchomione z katalogu głównego (CLI zapisze go w `packages/ui`), nigdy pisany ręcznie;
   2. ogólny wzorzec panelu, niezależny od konceptu → `ui/src/backend/<kategoria>/`;
   3. komponent związany z jednym konceptem → `ui/src/components/<koncept>/`;
   4. komponent jednej strony → obok jej `page.tsx`, dopóki nie potrzebuje go druga strona.
-- Panel korzysta ze wspólnych bloków z `ui/src/backend/`: `apiCall` (jedyne miejsce z `fetch('/api/...')`), `CrudForm`, `DataTable` i komponentów `feedback/`. Powstaną razem z konfiguracją shadcn i pierwszym ekranem panelu. Do tego czasu nie twórz ich zamienników.
+- Panel korzysta ze wspólnych bloków z `ui/src/backend/`: `apiCall` (jedyne miejsce z `fetch('/api/...')`), `CrudForm`, `DataTable` i komponentów `feedback/`. Powstaną razem z pierwszym ekranem panelu. Do tego czasu nie twórz ich zamienników.
 - Komponenty z `packages/ui` nie pobierają danych same, wszystko dostają przez propsy.
 
 ## Komendy
