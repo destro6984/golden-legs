@@ -9,7 +9,7 @@
     "dev": "npm run dev -w @golden-legs/app",
     "build": "npm run build -w @golden-legs/app",
     "start": "npm run start -w @golden-legs/app",
-    "lint": "eslint && npm run lint -w @golden-legs/app",
+    "lint": "eslint packages && npm run lint -w @golden-legs/app",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",

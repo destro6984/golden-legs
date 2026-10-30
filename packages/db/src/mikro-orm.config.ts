@@ -1,24 +1,18 @@
 import { defineConfig } from "@mikro-orm/postgresql";
 import { Migrator } from "@mikro-orm/migrations";
 import { entities } from "./entities";
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing environment variable ${name}`);
-  }
-  return value;
-}
+import { parseDbEnv } from "./env";
 
 // A factory, so env vars are read on first connection rather than on import:
 // `next build` imports this module without database credentials.
 export default function createConfig() {
+  const env = parseDbEnv();
   return defineConfig({
-    host: requireEnv("DB_HOST"),
-    port: Number(requireEnv("DB_PORT")),
-    dbName: requireEnv("DB_NAME"),
-    user: requireEnv("DB_USER"),
-    password: requireEnv("DB_PASSWORD"),
+    host: env.DB_HOST,
+    port: env.DB_PORT,
+    dbName: env.DB_NAME,
+    user: env.DB_USER,
+    password: env.DB_PASSWORD,
     entities,
     // The schema starts empty; entities arrive with the first feature.
     discovery: { warnWhenNoEntities: false },

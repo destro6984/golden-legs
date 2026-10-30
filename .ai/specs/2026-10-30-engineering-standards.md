@@ -148,7 +148,8 @@ When two principles pull apart, prefer the smaller, more explicit change.
 - No mass assignment: write endpoints persist the parsed Zod output, never the raw body.
 - No SQL built from user input; use MikroORM APIs or parameters.
 - Server recomputes anything that affects money; client-supplied prices are never trusted.
-- Secrets only via env (validated by a Zod env schema once it exists); the logger
+- Secrets only via env, validated by a Zod schema in the package that reads them
+  (`<package>/src/env.ts`; `core/src/config/env.ts` for core); the logger
   redacts passwords, tokens, cookies and authorization headers.
 - Generic auth error messages ("invalid credentials").
 - UUID primary keys.
@@ -257,9 +258,11 @@ Done on 2026-10-30:
    + `withScope`).
 4. shadcn/ui set up in `packages/ui` (style `base-nova`, Base UI, `neutral`, lucide);
    no primitives added yet.
+5. Zod env schema for `DB_*` in `packages/db/src/env.ts`, replacing `requireEnv`.
+   It lives in `db`, not `core/src/config/env.ts`, because `db` is the only reader and
+   cannot import `core`. `core/src/config/env.ts` is created with core's first variable.
 
 Next, each when its first real use appears:
 
-5. Zod env schema (`core/src/config/env.ts`) replacing ad-hoc `requireEnv`.
 6. `ui/src/backend/` (apiCall, CrudForm, DataTable, feedback) with the first panel screen.
 7. `makeCrudRoute`, `auth.ts`, `validators/`, `events/` with their first concept.

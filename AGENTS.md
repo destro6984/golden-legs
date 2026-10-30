@@ -64,7 +64,14 @@ Pełny standard inżynierski (tabela nazewnictwa, zasady, minimum bezpieczeństw
 - Schemat zmieniaj wyłącznie migracjami MikroORM: zmień encję, wygeneruj migrację (`npm run db:migration:create`), przejrzyj jej SQL i zacommituj ją razem ze snapshotem. Nie edytuj migracji, które zostały już zastosowane.
 - Każde żądanie pracuje na własnym forku EntityManagera (`em.fork()`). Nigdy nie używaj globalnego EntityManagera.
 - `@golden-legs/db` i `@golden-legs/core` działają tylko po stronie serwera: nie importuj ich w komponentach `"use client"`.
-- Dane dostępowe do bazy pochodzą ze zmiennych środowiskowych `DB_*` (wzór w `.env.example`), nigdy z kodu. Nową zmienną dopisz do `.env.example`.
+- Dane dostępowe do bazy pochodzą ze zmiennych środowiskowych `DB_*` (wzór w `.env.example`), nigdy z kodu.
+
+## Zmienne środowiskowe
+
+- Każdą zmienną waliduje schemat Zod w pakiecie, który ją czyta, w pliku `src/env.ts`. `DB_*` są w `packages/db/src/env.ts` (`parseDbEnv()`). Gdy `core` będzie potrzebować własnej zmiennej, powstanie `packages/core/src/config/env.ts`. Kod nie czyta `process.env` poza tymi plikami.
+- Parsowanie odbywa się przy pierwszym użyciu, nie przy imporcie modułu, bo `next build` działa bez sekretów.
+- Błąd walidacji podaje nazwy zmiennych i problem, nigdy wartości.
+- Nowa zmienna: dopisz ją do schematu i do `.env.example` (nazwa i opis, bez prawdziwej wartości).
 
 ## Interfejs
 
