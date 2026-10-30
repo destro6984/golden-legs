@@ -7,6 +7,9 @@ import path from "node:path";
 const ENV_FILE = ".env";
 const ENV_EXAMPLE_FILE = ".env.example";
 const PASSWORD_LINE = /^DB_PASSWORD=(.*)$/m;
+const QUOTED = /^(["'])(.*)\1$/;
+// The only engines.node form the installer understands; anything else fails loudly.
+const MINIMUM_RANGE = /^>=\s*(\d+)\.(\d+)\.(\d+)$/;
 // 24 random bytes → 32 base64url characters, safe in .env and in a connection URL.
 const PASSWORD_BYTES = 24;
 // Must match the volume name in compose.yaml.
@@ -17,16 +20,19 @@ export class SetupError extends Error {}
 const DONE = { skipped: false };
 
 export function checkNodeVersion({ current, required }) {
-  const minimum = required.replace(/^>=\s*/, "");
-  if (compareVersions(current, minimum) < 0) {
+  const match = required.trim().match(MINIMUM_RANGE);
+  if (!match) {
+    throw new SetupError(`Nieobsługiwany zakres engines.node w package.json: "${required}". Instalator rozumie tylko ">=X.Y.Z".`);
+  }
+  // "22.17.0-nightly…" → [22, 17, 0]
+  const running = current.split("-")[0].split(".").map(Number);
+  if (compareVersions(running, match.slice(1).map(Number)) < 0) {
     throw new SetupError(`Wymagany Node.js ${required}, a uruchomiony jest ${current}. Zaktualizuj Node.js.`);
   }
   return DONE;
 }
 
-function compareVersions(left, right) {
-  const a = left.split(".").map(Number);
-  const b = right.split(".").map(Number);
+function compareVersions(a, b) {
   for (let i = 0; i < 3; i++) {
     if (a[i] !== b[i]) {
       return a[i] - b[i];
@@ -40,7 +46,10 @@ export function checkDocker({ exec }) {
     throw new SetupError("Nie znaleziono Docker Compose. Zainstaluj Dockera z wtyczką Compose.");
   }
   if (exec("docker", ["info"], { capture: true }).status !== 0) {
-    throw new SetupError("Demon Dockera nie działa. Uruchom Dockera i spróbuj ponownie.");
+    throw new SetupError(
+      "Docker nie odpowiada: demon nie działa albo brakuje uprawnień do /var/run/docker.sock " +
+        "(na Linuksie dodaj użytkownika do grupy docker). Sprawdź szczegóły: docker info.",
+    );
   }
   return DONE;
 }
@@ -53,8 +62,11 @@ export function installDependencies({ exec }) {
 export function ensureEnvFile({ exec, fs, randomBytes, root }) {
   const envPath = path.join(root, ENV_FILE);
   if (fs.existsSync(envPath)) {
-    const password = fs.readFileSync(envPath, "utf8").match(PASSWORD_LINE)?.[1].trim();
-    if (!password) {
+    const line = fs.readFileSync(envPath, "utf8").match(PASSWORD_LINE);
+    if (!line) {
+      throw new SetupError(`Plik ${ENV_FILE} istnieje, ale nie ma linii DB_PASSWORD. Dopisz ją ręcznie; instalator nie zmienia istniejącego pliku.`);
+    }
+    if (!line[1].trim().replace(QUOTED, "$2")) {
       throw new SetupError(`Plik ${ENV_FILE} istnieje, ale DB_PASSWORD jest puste. Uzupełnij je ręcznie; instalator nie zmienia istniejącego pliku.`);
     }
     return { skipped: true, reason: `${ENV_FILE} już istnieje` };
@@ -77,7 +89,14 @@ export function ensureEnvFile({ exec, fs, randomBytes, root }) {
     ? example.replace(PASSWORD_LINE, `DB_PASSWORD=${password}`)
     : `${example.trimEnd()}\nDB_PASSWORD=${password}\n`;
   // "wx" never overwrites a file created in the meantime; 0o600 keeps the password private.
-  fs.writeFileSync(envPath, content, { flag: "wx", mode: 0o600 });
+  try {
+    fs.writeFileSync(envPath, content, { flag: "wx", mode: 0o600 });
+  } catch (error) {
+    if (error.code === "EEXIST") {
+      throw new SetupError(`Plik ${ENV_FILE} powstał w trakcie działania instalatora. Uruchom npm run setup ponownie.`);
+    }
+    throw error;
+  }
   return DONE;
 }
 
@@ -87,7 +106,7 @@ function databaseVolumeExists(exec) {
   if (config.status !== 0) {
     throw new SetupError("Nie udało się odczytać konfiguracji docker compose (compose.yaml).");
   }
-  const project = JSON.parse(config.stdout).name;
+  const project = parseProjectName(config.stdout);
   const volumes = exec(
     "docker",
     [
@@ -97,7 +116,18 @@ function databaseVolumeExists(exec) {
     ],
     { capture: true },
   );
+  if (volumes.status !== 0) {
+    throw new SetupError("Nie udało się sprawdzić wolumenów Dockera (docker volume ls). Bez tego instalator nie utworzy .env.");
+  }
   return volumes.stdout.trim() !== "";
+}
+
+function parseProjectName(output) {
+  try {
+    return JSON.parse(output).name;
+  } catch {
+    throw new SetupError("Nie udało się odczytać nazwy projektu z docker compose config. Zaktualizuj Docker Compose.");
+  }
 }
 
 export function startDatabase({ exec }) {

@@ -68,3 +68,8 @@ Do zrobienia: dokumentacja (1.5) i weryfikacja ręczna (1.6).
 Commit: `README.md` („Uruchomienie”: `npm run setup` jako zalecana droga, ręczne kroki jako alternatywa), `AGENTS.md` (komenda), dwie lekcje.
 Decyzje/pułapki: weryfikacja ręczna na świeżym klonie (osobny projekt compose `gl-setup-check`, port 5499). Bieg 1 kończy się czytelnym błędem portu (5433 zajęty przez bazę deweloperską). Biegi 2–3 kończą się kodem 0 i pomijają `.env` bez zmian (ta sama suma SHA-256). `GET /api/health` zwraca 200. Bez `.env` przy istniejącym wolumenie instalator zatrzymuje się bez zapisu. `.env` ma tryb 600, a hasło nie trafia do logu. Kontener i wolumen klonu usunięte.
 Do zrobienia: pełna bramka, przegląd `om-auto-review-pr`, gotowy PR.
+
+### 2026-10-30
+Commit: poprawki po przeglądzie `om-auto-review-pr`. Ścisły zakres `>=X.Y.Z` dla `engines.node` (inne zakresy dają błąd zamiast cichego przepuszczenia), komunikat Dockera wspomina o uprawnieniach do `docker.sock`, sprawdzanie statusu `docker volume ls`, `SetupError` dla nie-JSON-owego `compose config` i dla `EEXIST`, `DB_PASSWORD=""` traktowane jako puste, osobny komunikat przy braku linii. 42 testy, 100% pokrycia.
+Decyzje/pułapki: GitHub nie pozwala na „request changes” we własnym PR, więc werdykt zapisano jako review-komentarz i etykietę `changes-requested`.
+Do zrobienia: ponowny przegląd, gotowy PR, wynik CI.

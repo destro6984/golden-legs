@@ -37,6 +37,15 @@ describe("checkNodeVersion", () => {
     expect(checkNodeVersion({ current: "24.1.0", required: ">=22.17.0" })).toEqual({ skipped: false });
   });
 
+  it("ignores a prerelease suffix of the running version", () => {
+    expect(checkNodeVersion({ current: "22.17.0-nightly20260101", required: ">=22.17.0" })).toEqual({ skipped: false });
+    expect(() => checkNodeVersion({ current: "22.16.0-rc.1", required: ">=22.17.0" })).toThrow(/Wymagany/);
+  });
+
+  it.each(["^22.17.0", ">=22.17.0 <23", ">=22.17", "22.x"])("fails loudly on an unsupported range %j", (required) => {
+    expect(() => checkNodeVersion({ current: "20.0.0", required })).toThrow(/Nieobsługiwany zakres engines\.node/);
+  });
+
   it("rejects an older version with both versions in the message", () => {
     expect(() => checkNodeVersion({ current: "22.16.9", required: ">=22.17.0" })).toThrow(
       new SetupError("Wymagany Node.js >=22.17.0, a uruchomiony jest 22.16.9. Zaktualizuj Node.js."),
@@ -60,7 +69,7 @@ describe("checkDocker", () => {
   it("fails when the daemon is not running", () => {
     const exec = vi.fn((command: string, args: string[]) => (args[0] === "info" ? failed : ok()));
 
-    expect(() => checkDocker({ exec })).toThrow(/Demon Dockera/);
+    expect(() => checkDocker({ exec })).toThrow(/demon nie działa albo brakuje uprawnień do \/var\/run\/docker\.sock/);
   });
 });
 
@@ -87,7 +96,20 @@ describe("ensureEnvFile", () => {
     expect(exec).not.toHaveBeenCalled();
   });
 
-  it.each(["DB_PASSWORD=\n", "DB_PASSWORD=   \n", "DB_HOST=localhost\n"])(
+  it("accepts a quoted password", () => {
+    const fs = fakeFs({ "/repo/.env": 'DB_PASSWORD="secret"\n' });
+
+    expect(ensureEnvFile({ exec: vi.fn(), fs, randomBytes, root })).toEqual({ skipped: true, reason: ".env już istnieje" });
+  });
+
+  it("fails without changes when the existing .env has no DB_PASSWORD line", () => {
+    const fs = fakeFs({ "/repo/.env": "DB_HOST=localhost\n" });
+
+    expect(() => ensureEnvFile({ exec: vi.fn(), fs, randomBytes, root })).toThrow(/nie ma linii DB_PASSWORD/);
+    expect(fs.writeFileSync).not.toHaveBeenCalled();
+  });
+
+  it.each(["DB_PASSWORD=\n", "DB_PASSWORD=   \n", 'DB_PASSWORD=""\n', "DB_PASSWORD=''\n"])(
     "fails without changes when the existing .env has no password (%j)",
     (content) => {
       const fs = fakeFs({ "/repo/.env": content });
@@ -142,6 +164,42 @@ describe("ensureEnvFile", () => {
       /docker compose down -v/,
     );
     expect(fs.writeFileSync).not.toHaveBeenCalled();
+  });
+
+  it("fails before writing when the volume list cannot be read", () => {
+    const fs = fakeFs({ "/repo/.env.example": EXAMPLE });
+    const exec = vi.fn((command: string, args: string[]) =>
+      args[1] === "config" ? ok(JSON.stringify({ name: "golden-legs" })) : failed,
+    );
+
+    expect(() => ensureEnvFile({ exec, fs, randomBytes, root })).toThrow(/docker volume ls/);
+    expect(fs.writeFileSync).not.toHaveBeenCalled();
+  });
+
+  it("fails cleanly when compose prints something other than JSON", () => {
+    const fs = fakeFs({ "/repo/.env.example": EXAMPLE });
+
+    expect(() => ensureEnvFile({ exec: vi.fn(() => ok("WARN: not json")), fs, randomBytes, root })).toThrow(
+      new SetupError("Nie udało się odczytać nazwy projektu z docker compose config. Zaktualizuj Docker Compose."),
+    );
+  });
+
+  it("reports a .env created in the meantime instead of overwriting it", () => {
+    const fs = fakeFs({ "/repo/.env.example": EXAMPLE });
+    fs.writeFileSync.mockImplementation(() => {
+      throw Object.assign(new Error("exists"), { code: "EEXIST" });
+    });
+
+    expect(() => ensureEnvFile({ exec: dockerExec(""), fs, randomBytes, root })).toThrow(/powstał w trakcie/);
+  });
+
+  it("rethrows other write errors", () => {
+    const fs = fakeFs({ "/repo/.env.example": EXAMPLE });
+    fs.writeFileSync.mockImplementation(() => {
+      throw Object.assign(new Error("read-only"), { code: "EROFS" });
+    });
+
+    expect(() => ensureEnvFile({ exec: dockerExec(""), fs, randomBytes, root })).toThrow("read-only");
   });
 
   it("fails when docker compose cannot read the configuration", () => {
