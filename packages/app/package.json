@@ -11,14 +11,10 @@
   },
   "dependencies": {
     "@golden-legs/core": "*",
-    "@golden-legs/db": "*",
     "@golden-legs/ui": "*",
-    "@next/env": "16.4.3",
-    "awilix": "^13.0.5",
     "next": "16.4.3",
     "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "server-only": "^0.0.1"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

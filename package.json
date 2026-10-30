@@ -9,7 +9,7 @@
     "dev": "npm run dev -w @golden-legs/app",
     "build": "npm run build -w @golden-legs/app",
     "start": "npm run start -w @golden-legs/app",
-    "lint": "npm run lint -w @golden-legs/app",
+    "lint": "eslint && npm run lint -w @golden-legs/app",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
@@ -21,6 +21,8 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "typescript": "^5"
+    "eslint": "^9.39.5",
+    "typescript": "^5",
+    "typescript-eslint": "^8.72.1"
   }
 }

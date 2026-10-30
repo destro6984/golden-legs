@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "awilix": "^13.0.5"
+    "@golden-legs/db": "*",
+    "awilix": "^13.0.5",
+    "pino": "^10.4.0"
   }
 }

@@ -21,11 +21,13 @@ Projekt jest monorepo. Kod podzielony jest na pakiety w katalogu `packages/`:
 ```
 golden-legs/
 ├── packages/
-│   ├── app/    @golden-legs/app   aplikacja Next.js
-│   ├── core/   @golden-legs/core  logika domenowa i narzędzia wielokrotnego użytku
-│   ├── db/     @golden-legs/db    MikroORM: encje, repozytoria, migracje
+│   ├── app/    @golden-legs/app   aplikacja Next.js: routing, strony, route handlers
+│   ├── core/   @golden-legs/core  serwisy, kontener DI, warstwa HTTP, logger
+│   ├── db/     @golden-legs/db    MikroORM: konfiguracja, encje, migracje
 │   └── ui/     @golden-legs/ui    komponenty interfejsu wielokrotnego użytku
 ├── .ai/                           specyfikacje, dzienniki zadań i lekcje dla pracy z AI
+├── compose.yaml                   PostgreSQL do developmentu
+├── eslint.config.mjs              ESLint i granice pakietów dla core, db, ui
 ├── tsconfig.base.json             wspólna konfiguracja TypeScriptu
 └── package.json                   definicja workspace'ów i skrypty
 ```
@@ -33,37 +35,41 @@ golden-legs/
 ### Zależności między pakietami
 
 ```
-        app
-      ↙  ↓  ↘
-    ui   db   │
-      ↘  ↓  ↙
-        core
+  app ──→ core ──→ db
+   │
+   └────→ ui
 ```
 
-- **app** to aplikacja Next.js: routing, strony, server actions i route handlers. Tu powstaje kontener Awilix (composition root), który łączy serwisy z pozostałych pakietów.
-- **core** zawiera logikę domenową i narzędzia niezależne od frameworka. Nie zależy od żadnego innego pakietu.
-- **db** zawiera konfigurację MikroORM, encje, repozytoria i migracje. Działa wyłącznie po stronie serwera.
-- **ui** zawiera komponenty wielokrotnego użytku, w tym komponenty shadcn/ui dla panelu administracyjnego. Komponenty dostają dane przez propsy i nie odwołują się do bazy.
+- **app** to warstwa HTTP i renderowania: strony i route handlers. Do bazy sięga wyłącznie przez serwisy z `core`.
+- **core** zawiera logikę biznesową (serwisy), kontener Awilix, warstwę HTTP (`AppError`, `apiHandler`) i logger. Nie importuje `next` ani `react`.
+- **db** zawiera konfigurację MikroORM, encje i migracje. Jako jedyny pakiet importuje `@mikro-orm/*` i nie zależy od żadnego innego pakietu.
+- **ui** zawiera komponenty wielokrotnego użytku, w tym komponenty shadcn/ui dla panelu administracyjnego. Dane dostaje przez propsy i nie importuje innych pakietów.
 
-Pakiety udostępniają kod źródłowy TypeScript przez `src/index.ts`, a Next.js kompiluje go dzięki opcji `transpilePackages`.
+Kierunek zależności pilnuje ESLint (`no-restricted-imports`). Pakiety udostępniają kod źródłowy TypeScript przez `src/index.ts`, a Next.js kompiluje go dzięki opcji `transpilePackages`.
 
-### Dependency Injection
+Kod domenowy jest podzielony na koncepty: ten sam podkatalog (np. `orders/`) powtarza się w `db/src/entities/`, `core/src/services/` i `app/app/api/`. Pełny standard: [.ai/specs/2026-10-30-engineering-standards.md](.ai/specs/2026-10-30-engineering-standards.md).
 
-Kontener Awilix tworzony jest raz, w `packages/app/lib/container.ts`. Pakiety eksportują funkcje rejestrujące swoje serwisy (np. `registerDb()`), a serwisy dostają zależności przez parametry fabryki. Typ zawartości kontenera to interfejs `Cradle` z `@golden-legs/core`, który każdy pakiet rozszerza o swoje zależności.
+### Dependency Injection i warstwa HTTP
 
-Zależności związane z jednym żądaniem, takie jak EntityManager MikroORM (`em`), żyją w scope tworzonym dla każdego żądania:
+Kontener Awilix jest w `packages/core/src/container/`. `container.ts` rejestruje ręcznie każdą zależność, a `cradle.ts` opisuje jej typ. Serwisy dostają zależności przez konstruktor. EntityManager MikroORM (`em`) i serwisy, które go używają, żyją w scope tworzonym dla każdego wywołania `withScope`.
+
+Route handler to tylko opakowanie: `apiHandler` zamienia wynik na kopertę JSON, a błędy serwisów (`NotFoundError`, `ServiceUnavailableError`...) na właściwy status:
 
 ```ts
-import { getRequestScope } from "@/lib/container";
+import { connection } from "next/server";
+import { apiHandler, withScope } from "@golden-legs/core";
 
-const em = (await getRequestScope()).resolve("em");
+export const GET = apiHandler(async () => {
+  await connection();
+  return withScope(({ healthService }) => healthService.check());
+});
 ```
 
-Endpoint `GET /api/health` sprawdza połączenie z bazą przez kontener. Zwraca `200 {"status":"ok"}` albo `503`, gdy baza jest niedostępna.
+`GET /api/health` zwraca `200 {"ok":true,"data":{"status":"ok"}}` albo `503 {"ok":false,"error":{"code":"SERVICE_UNAVAILABLE",...}}`, gdy baza jest niedostępna.
 
 ### Baza danych
 
-Schemat bazy zmieniany jest wyłącznie migracjami MikroORM. Każde żądanie pracuje na własnym forku EntityManagera, a połączenia obsługuje pula MikroORM. Dane dostępowe pochodzą ze zmiennych środowiskowych z pliku `.env` w katalogu głównym, który Next.js wczytuje przez `@next/env` w `packages/app/next.config.ts`.
+Schemat bazy zmieniany jest wyłącznie migracjami MikroORM. Każde żądanie pracuje na własnym forku EntityManagera, a połączenia obsługuje pula MikroORM. Dane dostępowe pochodzą ze zmiennych środowiskowych z pliku `.env` w katalogu głównym, który `packages/app/next.config.ts` wczytuje przez `process.loadEnvFile()`.
 
 ## Uruchomienie
 
