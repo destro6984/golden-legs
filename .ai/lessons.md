@@ -30,3 +30,6 @@ Format wpisu:
 - 2026-10-30 — Tryb `strict` w Awilix nie blokuje pobierania zależności scoped z głównego kontenera. Blokuje singleton, który od niej zależy. Do pracy z `em` zawsze używaj `withScope`.
 - 2026-10-30 — Vitest 5 wymaga `@types/node` ≥ 22 (konflikt peer z `^20`), a configi Vitest muszą mieć rozszerzenie `.mts`, bo root `package.json` nie ma `"type": "module"`.
 - 2026-10-30 — `git` łączy się z GitHubem przez alias SSH `github.com-personal` (konto `destro6984`), a `gh` może być zalogowany na inne konto, które ma tylko odczyt. Operacje `gh` z zapisem (etykiety, PR, komentarze) kończą się wtedy błędem HTTP 404. Przed pracą skilli `om-*` sprawdź `gh api repos/destro6984/golden-legs -q .permissions`.
+- 2026-10-30 — `gh pr edit` i `gh issue edit` w `gh` 2.46 (Ubuntu) potrafią przerwać edycję błędem o Projects (classic) i nie nałożyć etykiety. Etykiety, przypisania i treść zmieniaj przez REST (`gh api -X POST repos/{owner}/{repo}/issues/{n}/labels -f "labels[]=..."`), jak robi to `.ai/trackers/github.md`.
+- 2026-10-30 — Plan `om-auto-create-pr` trafia do `.ai/runs/YYYY-MM-DD-<slug>.md`, czyli tam, gdzie dziennik zadania. Gdy spec PR ma już dziennik pod tą nazwą, plan implementacji dostaje inny slug (np. `-implementation`) i jest jednocześnie dziennikiem zadania. Inaczej oba PR-y dodają ten sam plik i powstaje konflikt.
+
