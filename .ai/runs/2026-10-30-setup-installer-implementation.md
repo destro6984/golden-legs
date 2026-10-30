@@ -7,7 +7,7 @@ Cele:
 
 Spec: [.ai/specs/2026-10-30-setup-installer.md](../specs/2026-10-30-setup-installer.md) (spec PR #2)
 Source doc: .ai/specs/2026-10-30-setup-installer.md
-Status: in-progress
+Status: done
 
 Ten plik jest jednocześnie planem wykonania `om-auto-create-pr` i dziennikiem zadania z `AGENTS.md`. Dziennik projektowania specyfikacji jest na gałęzi spec PR (`.ai/runs/2026-10-30-setup-installer.md`).
 
@@ -41,6 +41,8 @@ Non-goals: uruchamianie `npm run dev`, instalacja Node/Dockera, Windows bez WSL,
 
 ## Progress
 
+PR: #3
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: instalator npm run setup
@@ -73,3 +75,8 @@ Do zrobienia: pełna bramka, przegląd `om-auto-review-pr`, gotowy PR.
 Commit: poprawki po przeglądzie `om-auto-review-pr`. Ścisły zakres `>=X.Y.Z` dla `engines.node` (inne zakresy dają błąd zamiast cichego przepuszczenia), komunikat Dockera wspomina o uprawnieniach do `docker.sock`, sprawdzanie statusu `docker volume ls`, `SetupError` dla nie-JSON-owego `compose config` i dla `EEXIST`, `DB_PASSWORD=""` traktowane jako puste, osobny komunikat przy braku linii. 42 testy, 100% pokrycia.
 Decyzje/pułapki: GitHub nie pozwala na „request changes” we własnym PR, więc werdykt zapisano jako review-komentarz i etykietę `changes-requested`.
 Do zrobienia: ponowny przegląd, gotowy PR, wynik CI.
+
+### 2026-10-30
+Commit: brak nazwy projektu w wyjściu `docker compose config` (pusty JSON, brak `name`) daje `SetupError` zamiast filtra `project=undefined`, który przepuściłby zapis `.env`. Ponowny przegląd: wszystkie 5 uwag poprawione, verdict approve. 44 testy, 100% pokrycia, pełna bramka zielona.
+Decyzje/pułapki: uwagę typu nit poprawiono od razu, bo dotyczyła tej samej ochrony przed niepasującym hasłem. Specyfikacja trafi do `implemented/` po merge'u spec PR #2.
+Do zrobienia: merge #2, potem #3 (zamyka #1); przeniesienie specyfikacji do `.ai/specs/implemented/`.

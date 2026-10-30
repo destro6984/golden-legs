@@ -176,10 +176,10 @@ describe("ensureEnvFile", () => {
     expect(fs.writeFileSync).not.toHaveBeenCalled();
   });
 
-  it("fails cleanly when compose prints something other than JSON", () => {
+  it.each(["WARN: not json", "{}", '{"name":""}'])("fails cleanly without a project name in compose output (%j)", (output) => {
     const fs = fakeFs({ "/repo/.env.example": EXAMPLE });
 
-    expect(() => ensureEnvFile({ exec: vi.fn(() => ok("WARN: not json")), fs, randomBytes, root })).toThrow(
+    expect(() => ensureEnvFile({ exec: vi.fn(() => ok(output)), fs, randomBytes, root })).toThrow(
       new SetupError("Nie udało się odczytać nazwy projektu z docker compose config. Zaktualizuj Docker Compose."),
     );
   });

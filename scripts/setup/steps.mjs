@@ -123,11 +123,16 @@ function databaseVolumeExists(exec) {
 }
 
 function parseProjectName(output) {
+  let name;
   try {
-    return JSON.parse(output).name;
+    name = JSON.parse(output).name;
   } catch {
+    // handled below together with a missing name
+  }
+  if (typeof name !== "string" || name === "") {
     throw new SetupError("Nie udało się odczytać nazwy projektu z docker compose config. Zaktualizuj Docker Compose.");
   }
+  return name;
 }
 
 export function startDatabase({ exec }) {
